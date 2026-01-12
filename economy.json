@@ -1,0 +1,52 @@
+{
+    "526366336507707402": {
+        "balance": 116.0,
+        "last_daily": "2026-01-12",
+        "inventory": [],
+        "generators": {
+            "cisco_lab": 1
+        },
+        "last_collection": "2026-01-12T16:14:47.750226"
+    },
+    "270220773682053133": {
+        "balance": 163.90000000000003,
+        "last_daily": "2026-01-12",
+        "inventory": [
+            "logi_b100",
+            "logi_b100"
+        ],
+        "generators": {
+            "cisco_lab": 5
+        }
+    },
+    "234666130004901888": {
+        "balance": 247,
+        "last_daily": "2026-01-12",
+        "inventory": []
+    },
+    "457928282822672384": {
+        "balance": 251.5,
+        "last_daily": "2026-01-12",
+        "inventory": [
+            "logi_b100"
+        ],
+        "generators": {
+            "cisco_lab": 5
+        },
+        "last_collection": "2026-01-12T16:27:58.122443"
+    },
+    "201632429524385792": {
+        "balance": 56,
+        "last_daily": "2026-01-12",
+        "inventory": [],
+        "generators": {
+            "cisco_lab": 2
+        }
+    },
+    "_GLOBAL_JACKPOT": 1800,
+    "762661687043948565": {
+        "balance": 0,
+        "last_daily": "2026-01-12",
+        "inventory": []
+    }
+}
