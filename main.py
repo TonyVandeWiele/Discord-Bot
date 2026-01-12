@@ -31,7 +31,8 @@ class DefoozBot(commands.Bot):
             'src.cogs.game',
             'src.cogs.economy_system',
             'src.cogs.fun_games',
-            'src.cogs.shop'
+            'src.cogs.shop',
+            'src.cogs.crypto'
         ]
 
         print("--- Loading Cogs ---")
@@ -42,13 +43,7 @@ class DefoozBot(commands.Bot):
             except Exception as e:
                 print(f"❌ Failed to load {extension}: {e}")
         
-        # Sync slash commands
-        print("--- Syncing Slash Commands ---")
-        try:
-            synced = await self.tree.sync()
-            print(f"✅ Synced {len(synced)} slash commands")
-        except Exception as e:
-            print(f"❌ Failed to sync: {e}")
+        # Syncing removed from here to prevent blocking login
 
     async def on_ready(self):
         print(f'🤖 Logged in as {self.user} (ID: {self.user.id})')
@@ -56,6 +51,14 @@ class DefoozBot(commands.Bot):
             type=discord.ActivityType.watching, 
             name="Corrige l'examen de Cloud"
         ))
+        
+        # Sync commands in background after login
+        print("--- Syncing Slash Commands (Background) ---")
+        try:
+            synced = await self.tree.sync()
+            print(f"✅ Synced {len(synced)} slash commands")
+        except Exception as e:
+            print(f"❌ Failed to sync: {e}")
 
 bot = DefoozBot()
 

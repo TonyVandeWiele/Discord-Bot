@@ -47,9 +47,18 @@ class EconomySystem(commands.Cog):
         return self.get_user_data(user_id)["balance"]
 
     def add_money(self, user_id: int, amount: float):
+        # TAX SYSTEM: 10% on amounts >= 1000
+        tax = 0
+        if amount >= 1000:
+            tax = amount * 0.10
+            amount -= tax
+            # Add tax to jackpot? Or burn it? Let's add to Jackpot
+            self.add_jackpot(int(tax))
+            
         user_data = self.get_user_data(user_id)
         user_data["balance"] += amount
         self.save_data()
+        return tax # Return tax amount for UI feedback
 
     def remove_money(self, user_id: int, amount: float) -> bool:
         user_data = self.get_user_data(user_id)
@@ -191,6 +200,180 @@ class EconomySystem(commands.Cog):
             await interaction.response.send_message(f"💸 **Transfer**: Sent **{amount}** coins to {user.mention}.")
         else:
             await interaction.response.send_message("❌ **Insufficient Funds** to make this transfer.", ephemeral=True)
+
+    # --- LOAN SYSTEM & REDISTRIBUTION ---
+    
+    def create_loan(self, lender_id: int, borrower_id: int, amount: float, interest_percent: int):
+        import uuid
+        import datetime
+        
+        loan_id = str(uuid.uuid4())[:8]
+        loan_data = {
+            "id": loan_id,
+            "lender": lender_id,
+            "borrower": borrower_id,
+            "amount": amount,
+            "interest": interest_percent,
+            "repayment": amount * (1 + interest_percent / 100),
+            "date": datetime.date.today().isoformat(),
+            "status": "pending"
+        }
+        
+        if "_LOANS" not in self.data: self.data["_LOANS"] = []
+        self.data["_LOANS"].append(loan_data)
+        self.save_data()
+        return loan_id, loan_data["repayment"]
+
+    def confirm_loan(self, loan_id: str):
+        # Helper to activate a loan
+        pass # Implemented in command logic for simplicity or here? 
+        # Actually proper way: Command creates pending, borrower accepts. 
+        # Simply: User A loans to User B -> Money removed from A, added to B (with tax?).
+        # For simplicity: Direct loan.
+        pass
+
+    def get_user_loans(self, user_id: int):
+        loans = self.data.get("_LOANS", [])
+        return [l for l in loans if l["borrower"] == user_id or l["lender"] == user_id]
+
+    def pay_loan(self, loan_id: str, payer_id: int):
+        loans = self.data.get("_LOANS", [])
+        for loan in loans:
+            if loan["id"] == loan_id and loan["status"] == "pending":
+                if loan["borrower"] != payer_id: return "not_borrower"
+                
+                repayment = loan["repayment"]
+                if self.remove_money(payer_id, repayment):
+                    self.add_money(loan["lender"], repayment) # Tax applies on repayment income
+                    loan["status"] = "paid"
+                    self.save_data()
+                    return "success"
+                else:
+                    return "insufficient_funds"
+        return "not_found"
+
+    
+    # --- RAIN SYSTEM ---
+
+    def distribute_money(self, sender_id: int, amount: float):
+        """Helper for instant redistribution (Casino)"""
+        if not self.remove_money(sender_id, amount):
+            return False, 0
+            
+        targets = []
+        for uid in self.data:
+             if uid.isdigit() and int(uid) != sender_id:
+                 targets.append(int(uid))
+        
+        if not targets:
+            self.add_money(sender_id, amount) 
+            return False, 0
+            
+        share = amount / len(targets)
+        for uid in targets:
+            self.add_money(uid, share)
+            
+        return True, share
+
+    @app_commands.command(name="rain", description="Make it Rain! (Interactive 60s Pool)")
+    async def rain(self, interaction: discord.Interaction, amount: int):
+         if amount <= 0: return await interaction.response.send_message("❌ Invalid amount.", ephemeral=True)
+         
+         if not self.remove_money(interaction.user.id, amount):
+             return await interaction.response.send_message("❌ You are too poor to make it rain.", ephemeral=True)
+
+         # Create View
+         view = RainView(self.bot, amount, interaction.user.id)
+         await interaction.response.send_message(f"🌧️ **MAKE IT RAIN!** 🌧️\n**{interaction.user.display_name}** is dropping **{amount} Coins**!\n\n👇 **Click the button to join the pool!**\n⏳ *Ends in 60 seconds...*", view=view)
+         view.message = await interaction.original_response()
+
+class RainView(discord.ui.View):
+    def __init__(self, bot, amount, owner_id):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.amount = amount
+        self.owner_id = owner_id
+        self.participants = set()
+        self.message = None
+
+    @discord.ui.button(label="💸 Grab Coins", style=discord.ButtonStyle.success)
+    async def grab(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id == self.owner_id:
+             return await interaction.response.send_message("❌ You dropped it, you can't pick it up!", ephemeral=True)
+        
+        if interaction.user.id in self.participants:
+            return await interaction.response.send_message("❌ You are already in the pool!", ephemeral=True)
+        
+        self.participants.add(interaction.user.id)
+        await interaction.response.send_message("✅ You joined the rain pool!", ephemeral=True)
+        
+        # Update button label
+        button.label = f"💸 Grab Coins ({len(self.participants)})"
+        await self.message.edit(view=self)
+
+    async def on_timeout(self):
+        if not self.participants:
+            # Refund owner
+            eco = self.bot.get_cog("EconomySystem")
+            if eco: eco.add_money(self.owner_id, self.amount)
+            if self.message: await self.message.edit(content=f"❌ **RAIN OVER**: No one picked up the **{self.amount} Coins**. Refunded to {self.owner_id}.", view=None)
+            return
+
+        share = self.amount / len(self.participants)
+        eco = self.bot.get_cog("EconomySystem")
+        if eco:
+            for uid in self.participants:
+                eco.add_money(uid, share) # Tax individual shares? Maybe. For now, no double tax.
+        
+        if self.message:
+            await self.message.edit(content=f"🌧️ **RAIN OVER!**\n**{self.amount} Coins** shared among **{len(self.participants)}** people.\nEveryone got **{share:.1f} Coins**!", view=None)
+
+    @app_commands.command(name="loan", description="Offer a loan to a user")
+    async def loan(self, interaction: discord.Interaction, user: discord.Member, amount: int, interest: int):
+        if amount <= 0 or interest < 0:
+            return await interaction.response.send_message("❌ Invalid parameters.", ephemeral=True)
+        
+        # Immediate transfer model:
+        # lender loses money, borrower gets money. Loan recorded for repayment.
+        if self.remove_money(interaction.user.id, amount):
+            self.add_money(user.id, amount) # Taxed
+            
+            lid, repay = self.create_loan(interaction.user.id, user.id, amount, interest)
+            
+            await interaction.response.send_message(f"💸 **LOAN ISSUED**\n{interaction.user.mention} loaned **{amount}** to {user.mention} at **{interest}%** interest.\n💳 **Repayment Due**: {repay:.1f} (ID: `{lid}`)\n*Use `/payloan {lid}` to repay.*")
+        else:
+            await interaction.response.send_message("❌ Insufficient funds to lend.", ephemeral=True)
+
+    @app_commands.command(name="payloan", description="Repay a loan")
+    async def payloan(self, interaction: discord.Interaction, loan_id: str):
+        res = self.pay_loan(loan_id, interaction.user.id)
+        if res == "success":
+            await interaction.response.send_message("✅ **Loan Repaid!** You are free.")
+        elif res == "insufficient_funds":
+            await interaction.response.send_message("❌ You don't have the money to repay this loan.", ephemeral=True)
+        elif res == "not_borrower":
+             await interaction.response.send_message("❌ This is not your loan to repay.", ephemeral=True)
+        else:
+            await interaction.response.send_message("❌ Loan not found or already paid.", ephemeral=True)
+
+    @app_commands.command(name="loans", description="View your active loans")
+    async def loans(self, interaction: discord.Interaction):
+        loans = self.get_user_loans(interaction.user.id)
+        if not loans:
+             return await interaction.response.send_message("You have no active loans.", ephemeral=True)
+        
+        embed = discord.Embed(title="📜 Your Loans", color=discord.Color.gold())
+        for l in loans:
+            status = "🔴 Unpaid" if l["status"] == "pending" else "🟢 Paid"
+            role = "Borrower" if l["borrower"] == interaction.user.id else "Lender"
+            other = l["lender"] if role == "Borrower" else l["borrower"]
+            
+            embed.add_field(
+                name=f"ID: {l['id']} ({role})", 
+                value=f"Amount: {l['amount']}\nRepayment: **{l['repayment']:.1f}**\nTo/From: <@{other}>\nStatus: {status}", 
+                inline=False
+            )
+        await interaction.response.send_message(embed=embed)
 
     # --- ADMIN COMMAND (Restricted) ---
     @app_commands.command(name="eco_give", description="Admin: Give money (Cheating)")

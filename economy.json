@@ -1,51 +1,115 @@
 {
     "526366336507707402": {
-        "balance": 116.0,
+        "balance": 994.9999999999999,
         "last_daily": "2026-01-12",
-        "inventory": [],
+        "inventory": [
+            "logi_b100"
+        ],
         "generators": {
-            "cisco_lab": 1
+            "cisco_lab": 5
         },
-        "last_collection": "2026-01-12T16:14:47.750226"
+        "last_collection": "2026-01-12T20:57:51.034496"
     },
     "270220773682053133": {
-        "balance": 163.90000000000003,
+        "balance": 45.30000000000009,
         "last_daily": "2026-01-12",
         "inventory": [
             "logi_b100",
-            "logi_b100"
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "hyperx_pulsefire",
+            "hyperx_pulsefire",
+            "hyperx_pulsefire"
         ],
         "generators": {
             "cisco_lab": 5
         }
     },
     "234666130004901888": {
-        "balance": 247,
+        "balance": 247.4,
         "last_daily": "2026-01-12",
         "inventory": []
     },
     "457928282822672384": {
-        "balance": 251.5,
+        "balance": 7243.899999999994,
         "last_daily": "2026-01-12",
         "inventory": [
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "hyperx_pulsefire",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "hyperx_pulsefire",
+            "hyperx_pulsefire",
+            "hyperx_pulsefire",
+            "hyperx_pulsefire",
+            "razer_deathadder",
+            "razer_deathadder",
+            "razer_deathadder",
+            "razer_deathadder",
+            "logi_g502",
+            "logi_g502",
+            "logi_g502",
+            "logi_g502",
+            "logi_g502",
+            "wooting_60he",
+            "wooting_60he",
+            "wooting_60he",
+            "wooting_60he",
+            "wooting_60he",
+            "logi_g502",
+            "logi_g502",
+            "logi_g502",
+            "logi_g502",
+            "secretlab_titan",
+            "wooting_60he",
+            "wooting_60he",
+            "wooting_60he"
+        ],
+        "generators": {
+            "cisco_lab": 5,
+            "aws_lambda": 5,
+            "nexus_9k": 5,
+            "ecs_cluster": 5,
+            "sagemaker": 5,
+            "braket": 1
+        },
+        "last_collection": "2026-01-12T20:58:03.820631"
+    },
+    "201632429524385792": {
+        "balance": 30.4,
+        "last_daily": "2026-01-12",
+        "inventory": [
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
+            "logi_b100",
             "logi_b100"
         ],
         "generators": {
             "cisco_lab": 5
         },
-        "last_collection": "2026-01-12T16:27:58.122443"
+        "last_collection": "2026-01-12T19:30:49.958774"
     },
-    "201632429524385792": {
-        "balance": 56,
-        "last_daily": "2026-01-12",
-        "inventory": [],
-        "generators": {
-            "cisco_lab": 2
-        }
-    },
-    "_GLOBAL_JACKPOT": 1800,
+    "_GLOBAL_JACKPOT": 6485,
     "762661687043948565": {
-        "balance": 0,
+        "balance": 0.4,
         "last_daily": "2026-01-12",
         "inventory": []
     }

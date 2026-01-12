@@ -7,42 +7,44 @@ class Shop(commands.Cog):
         self.bot = bot
         # Consumables / Utility / Upgrades
         self.items = {
-            # Utility
-            "exam_answers": {"type": "item", "name": "📜 Exam Answers", "cost": 500, "desc": "Guarantees 20/20 on next grade", "req_id": None},
-            "vpn": {"type": "item", "name": "🛡️ VPN Shield", "cost": 100, "desc": "Protects against /kill (One use)", "req_id": None},
-            "coffee": {"type": "item", "name": "☕ Defooz Coffee", "cost": 15, "desc": "Buy the professor a drink (Good Karma)", "req_id": None},
-            "lottery": {"type": "item", "name": "🎫 Lottery Ticket", "cost": 50, "desc": "Scratch to win random amount", "req_id": None},
+            # Utility (Fixed Cost or Low Multiplier)
+            "exam_answers": {"type": "item", "name": "📜 Exam Answers", "base_cost": 500, "multiplier": 1.5, "desc": "Guarantees 20/20 on next grade", "req_id": None},
+            "vpn": {"type": "item", "name": "🛡️ VPN Shield", "base_cost": 100, "multiplier": 1.1, "desc": "Protects against /kill (One use)", "req_id": None},
+            "coffee": {"type": "item", "name": "☕ Defooz Coffee", "base_cost": 15, "multiplier": 1.0, "desc": "Buy the professor a drink (Good Karma)", "req_id": None},
+            "lottery": {"type": "item", "name": "🎫 Lottery Ticket", "base_cost": 50, "multiplier": 1.0, "desc": "Scratch to win random amount", "req_id": None},
             
             # Clicker Upgrades (Alternating Flat / Crit)
+            # Prices increased by +20% (Cumulative inflation)
+            
             "logi_b100": {
-                "type": "upgrade", "name": "🖱️ Logitech B100", "cost": 250, 
-                "desc": "Clicker: +0.5 Coin (Office Basic)", 
-                "req_id": None, "req_count": 0, "bonus": 0.5, "stat": "flat"
+                "type": "upgrade", "name": "🖱️ Logitech B100", "base_cost": 360, "multiplier": 1.15,
+                "desc": "Clicker: +0.4 Coin", 
+                "req_id": None, "req_count": 0, "bonus": 0.4, "stat": "flat"
             },
             "hyperx_pulsefire": {
-                "type": "upgrade", "name": "🖱️ HyperX Pulsefire", "cost": 600, 
-                "desc": "Clicker: +2% Crit Chance (Entry Gaming)", 
-                "req_id": "logi_b100", "req_count": 5, "bonus": 0.02, "stat": "crit"
+                "type": "upgrade", "name": "🖱️ HyperX Pulsefire", "base_cost": 860, "multiplier": 1.15,
+                "desc": "Clicker: +0.5% Crit Chance", 
+                "req_id": "logi_b100", "req_count": 10, "bonus": 0.005, "stat": "crit"
             },
             "razer_deathadder": {
-                "type": "upgrade", "name": "🖱️ Razer DeathAdder V3", "cost": 1500, 
-                "desc": "Clicker: +2.0 Coin (Esports Pro)", 
-                "req_id": "hyperx_pulsefire", "req_count": 5, "bonus": 2.0, "stat": "flat"
+                "type": "upgrade", "name": "🖱️ Razer DeathAdder V3", "base_cost": 2160, "multiplier": 1.15,
+                "desc": "Clicker: +1.5 Coin", 
+                "req_id": "hyperx_pulsefire", "req_count": 10, "bonus": 1.5, "stat": "flat"
             },
             "logi_g502": {
-                "type": "upgrade", "name": "🖱️ Logitech G502 Hero", "cost": 4000, 
-                "desc": "Clicker: +3% Crit Chance (The Brick)", 
-                "req_id": "razer_deathadder", "req_count": 5, "bonus": 0.03, "stat": "crit"
+                "type": "upgrade", "name": "🖱️ Logitech G502 Hero", "base_cost": 5760, "multiplier": 1.15,
+                "desc": "Clicker: +1.0% Crit Chance", 
+                "req_id": "razer_deathadder", "req_count": 10, "bonus": 0.01, "stat": "crit"
             },
             "wooting_60he": {
-                "type": "upgrade", "name": "🎹 Wooting 60HE+", "cost": 10000, 
-                "desc": "Clicker: +8.0 Coin (Rapid Trigger)", 
-                "req_id": "logi_g502", "req_count": 5, "bonus": 8.0, "stat": "flat"
+                "type": "upgrade", "name": "🎹 Wooting 60HE+", "base_cost": 14400, "multiplier": 1.15,
+                "desc": "Clicker: +6.0 Coin", 
+                "req_id": "logi_g502", "req_count": 10, "bonus": 6.0, "stat": "flat"
             },
             "secretlab_titan": {
-                "type": "upgrade", "name": "💺 SecretLab Titan Evo", "cost": 25000, 
-                "desc": "Clicker: +4% Crit Chance (Gamer Comfort)", 
-                "req_id": "wooting_60he", "req_count": 5, "bonus": 0.04, "stat": "crit"
+                "type": "upgrade", "name": "💺 SecretLab Titan Evo", "base_cost": 36000, "multiplier": 1.15,
+                "desc": "Clicker: +1.5% Crit Chance", 
+                "req_id": "wooting_60he", "req_count": 10, "bonus": 0.015, "stat": "crit"
             }
         }
         
@@ -50,47 +52,93 @@ class Shop(commands.Cog):
         self.generators = {
             "cisco_lab": {
                 "name": "🕸️ Cisco Packet Tracer", 
-                "cost": 100, 
+                "base_cost": 100, "multiplier": 1.15,
                 "rate": 5, 
                 "desc": "Simulated network. Low profit.",
                 "req_id": None, "req_count": 0
             },
             "aws_lambda": {
                 "name": "⚡ AWS Lambda", 
-                "cost": 500, 
-                "rate": 20, 
+                "base_cost": 500, "multiplier": 1.15,
+                "rate": 15, 
                 "desc": "Serverless compute functions.",
-                "req_id": "cisco_lab", "req_count": 5
+                "req_id": "cisco_lab", "req_count": 10
             },
             "nexus_9k": {
                 "name": "🔌 Cisco Nexus 9000", 
-                "cost": 2000, 
-                "rate": 100, 
+                "base_cost": 2000, "multiplier": 1.15,
+                "rate": 80, 
                 "desc": "Data Center switch. Big bandwidth.",
-                "req_id": "aws_lambda", "req_count": 5
+                "req_id": "aws_lambda", "req_count": 10
             },
             "ecs_cluster": {
                 "name": "📦 AWS ECS Fargate", 
-                "cost": 7500, 
-                "rate": 400, 
+                "base_cost": 7500, "multiplier": 1.15,
+                "rate": 300, 
                 "desc": "Elastic Container Service. Docker containers.",
-                "req_id": "nexus_9k", "req_count": 5
+                "req_id": "nexus_9k", "req_count": 10
             },
             "sagemaker": {
                 "name": "🧠 AWS SageMaker", 
-                "cost": 25000, 
-                "rate": 1500, 
+                "base_cost": 25000, "multiplier": 1.15,
+                "rate": 1000, 
                 "desc": "Training ML models on p4d.24xlarge.",
-                "req_id": "ecs_cluster", "req_count": 5
+                "req_id": "ecs_cluster", "req_count": 10
             },
             "braket": {
                 "name": "⚛️ AWS Braket (Quantum)", 
-                "cost": 100000, 
-                "rate": 7000, 
+                "base_cost": 100000, "multiplier": 1.15,
+                "rate": 5000, 
                 "desc": "Quantum computing. The future is now.",
-                "req_id": "sagemaker", "req_count": 5
+                "req_id": "sagemaker", "req_count": 10
+            },
+            "h100_cluster": {
+                "name": "🚅 NVIDIA H100 Cluster", 
+                "base_cost": 450000, "multiplier": 1.15,
+                "rate": 18000, 
+                "desc": "AI Supercomputer. Trains GPT-6.",
+                "req_id": "braket", "req_count": 10
+            },
+            "quantum_wan": {
+                "name": "🌐 Quantum Entangled WAN", 
+                "base_cost": 1500000, "multiplier": 1.15,
+                "rate": 55000, 
+                "desc": "Zero latency planetary network.",
+                "req_id": "h100_cluster", "req_count": 10
+            },
+             "dyson_sphere": {
+                "name": "☀️ Matrioshka Brain", 
+                "base_cost": 8000000, "multiplier": 1.15,
+                "rate": 350000, 
+                "desc": "Harnessing a star for infinite compute.",
+                "req_id": "quantum_wan", "req_count": 10
             }
         }
+
+    def get_dynamic_cost(self, user_id: int, item_id: str) -> int:
+        eco = self.get_economy()
+        if not eco: return 999999999
+
+        item = self.items.get(item_id) or self.generators.get(item_id)
+        if not item: return 0
+
+        user_data = eco.get_user_data(user_id)
+        
+        # Calculate owned count
+        count = 0
+        if item_id in self.items: # Item/Upgrade
+            inv = user_data.get("inventory", [])
+            count = inv.count(item_id)
+        elif item_id in self.generators: # Generator
+            gens = user_data.get("generators", {})
+            count = gens.get(item_id, 0)
+        
+        base = item.get("base_cost", 0)
+        mult = item.get("multiplier", 1.15)
+        
+        # Formula: Base * (Multiplier ^ Owned)
+        cost = int(base * (mult ** count))
+        return cost
 
     def get_economy(self):
         return self.bot.get_cog("EconomySystem")
@@ -128,8 +176,9 @@ class Shop(commands.Cog):
                 embed.add_field(name=f"{item['name']} - LOCKED", value=req_text, inline=True)
             else:
                 owned_count = inv.count(item_id)
+                current_cost = self.get_dynamic_cost(interaction.user.id, item_id)
                 owned_text = f"\nOwned: **{owned_count}**" if item["type"] == "upgrade" else ""
-                embed.add_field(name=f"{item['name']} - {item['cost']}💰", value=f"{item['desc']}{owned_text}", inline=True)
+                embed.add_field(name=f"{item['name']} - {current_cost}💰", value=f"{item['desc']}{owned_text}", inline=True)
             
         # Generators Section
         embed.add_field(name="🏭 Passive Income (Tech Tree)", value="Buy tech to generate coins/hour.", inline=False)
@@ -150,8 +199,9 @@ class Shop(commands.Cog):
             if is_locked:
                 embed.add_field(name=f"{gen['name']} - LOCKED", value=req_text, inline=True)
             else:
+                current_cost = self.get_dynamic_cost(interaction.user.id, gen_id)
                 embed.add_field(
-                    name=f"{gen['name']} - {gen['cost']}💰", 
+                    name=f"{gen['name']} - {current_cost}💰", 
                     value=f"Income: **{gen['rate']}/hr**\nOwned: **{owned}**\n{gen['desc']}", 
                     inline=True
                 )
@@ -163,7 +213,8 @@ class Shop(commands.Cog):
         all_items = {**self.items, **self.generators}
         choices = []
         for key, value in all_items.items():
-            display_name = f"{value['name']} ({value['cost']}💰)"
+            # Show base cost in autocomplete just for reference, or generic
+            display_name = f"{value['name']}"
             if current.lower() in display_name.lower():
                 choices.append(app_commands.Choice(name=display_name, value=key))
         
@@ -200,10 +251,13 @@ class Shop(commands.Cog):
                      req_name = self.items[it["req_id"]]["name"]
                      return await interaction.response.send_message(f"🔒 **Locked**: You need **{it['req_count']}x {req_name}** first.", ephemeral=True)
 
-        if eco.remove_money(interaction.user.id, item['cost']):
+        # Calculate Dynamic Cost
+        total_cost = self.get_dynamic_cost(interaction.user.id, item_id)
+        
+        if eco.remove_money(interaction.user.id, total_cost):
             eco.add_item(interaction.user.id, item_id)
             
-            msg = f"✅ **Purchased** {item['name']} for {item['cost']} Coins!"
+            msg = f"✅ **Purchased** {item['name']} for {total_cost} Coins!"
             
             # Special logic for consumables
             if item_id == "lottery":
@@ -343,7 +397,7 @@ class MiningView(discord.ui.View):
         is_crit = False
         
         if random.random() < crit_chance:
-            gain = base_gain * 5 
+            gain = base_gain * 3 
             is_crit = True
         
         self.eco.add_money(interaction.user.id, gain)
