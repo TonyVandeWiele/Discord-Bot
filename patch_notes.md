@@ -1,4 +1,4 @@
-# 📢 Patch Notes v2.0 - The Economy Update
+# 📢 Patch Notes v1.1 - The Economy Update
 
 **Tony** has been working hard in the lab. Here comes a massive update to the Defooz Economy!
 

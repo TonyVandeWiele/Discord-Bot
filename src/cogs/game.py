@@ -58,12 +58,8 @@ class Game(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="mission", description="Start a Network Rescue Mission (Interactive)")
-    async def mission(self, interaction: discord.Interaction):
-        # Initial Story
-        embed = discord.Embed(title="🚨 NETWORK EMERGENCY", description="**Alert!** The Core Router 9000 has stopped responding.\n**Ben** was seen near the rack holding a coffee.\n\n*What do you do?*", color=discord.Color.red())
-        view = MissionView()
-        await interaction.response.send_message(embed=embed, view=view)
+    # Mission command removed
+
 
     @app_commands.command(name="traceroute", description="Visual animated traceroute")
     async def traceroute(self, interaction: discord.Interaction, target: str):

@@ -238,17 +238,13 @@ class CryptoSystem(commands.Cog):
                 await crypto.save_data()
                 
                 await interaction.response.send_message(f"✅ **Purchased** {item['name']}!", ephemeral=True)
+                
+                # Reset view to clear selection
+                try:
+                    await interaction.message.edit(view=self.view)
+                except:
+                    pass
 
-
-    # --- COMMANDS ---
-
-    async def item_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        choices = []
-        for key, value in COMPONENTS.items():
-            display_name = f"{value['name']} ({value['cost']}💰)"
-            if current.lower() in display_name.lower():
-                choices.append(app_commands.Choice(name=display_name, value=key))
-        return choices[:25]
 
     @app_commands.command(name="crypto_price", description="Check current Bitcoin Price (Updated every 10m)")
     async def crypto_price(self, interaction: discord.Interaction):
@@ -288,34 +284,7 @@ class CryptoSystem(commands.Cog):
         view = self.ShopView(self.bot, COMPONENTS, interaction.user.id)
         await interaction.response.send_message(embed=embed, view=view)
 
-    @app_commands.command(name="crypto_buy", description="Purchase mining gear")
-    @app_commands.autocomplete(item_id=item_autocomplete)
-    async def crypto_buy(self, interaction: discord.Interaction, item_id: str):
-        item = COMPONENTS.get(item_id)
-        if not item:
-            return await interaction.response.send_message("❌ Item not found.", ephemeral=True)
-            
-        eco = self.bot.get_cog("EconomySystem")
-        if not eco: return
-        
-        # Check money
-        if not eco.remove_money(interaction.user.id, item["cost"]):
-            return await interaction.response.send_message("❌ Insufficient funds.", ephemeral=True)
-            
-        # Check capacity if buying component
-        if item["type"] != "rack":
-            slots = self.get_rack_capacity(interaction.user.id)
-            used = self.get_component_count(interaction.user.id)
-            if used >= slots:
-                eco.add_money(interaction.user.id, item["cost"]) # Refund
-                return await interaction.response.send_message(f"❌ **No Space!** You have {used}/{slots} slots used. Buy a Rack!", ephemeral=True)
 
-        # Add item
-        data = self.get_user_data(interaction.user.id)
-        data["components"].append(item_id)
-        await self.save_data()
-        
-        await interaction.response.send_message(f"✅ **Purchased** {item['name']}!")
 
     @app_commands.command(name="crypto_stats", description="View your mining rig")
     async def crypto_stats(self, interaction: discord.Interaction):
@@ -355,7 +324,6 @@ class CryptoSystem(commands.Cog):
         # Rate: 1 BTC = self.btc_price Coins
         coins = amount_btc * self.btc_price
         
-        data["btc"] -= amount_btc
         data["btc"] -= amount_btc
         await self.save_data()
         

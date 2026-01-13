@@ -84,22 +84,8 @@ class DefoozPersona(commands.Cog):
 
         await interaction.response.send_message(f"🎓 **Grade for {user.mention}**: {score}/20\n👨‍🏫 *Professor Defooz says:* {comment}{reward_msg}")
 
-    @app_commands.command(name="aws_bill", description="Generate a fake AWS invoice")
-    async def aws_bill(self, interaction: discord.Interaction):
-        amount = random.randint(500, 15000)
-        services = ["EC2 (p3.16xlarge)", "RDS Multi-AZ", "Nat Gateway (Idle)", "Data Transfer Out", "Elastic Kubernetes Service"]
-        regions = ["us-east-1", "eu-west-1", "ap-northeast-1"]
-        
-        service = random.choice(services)
-        region = random.choice(regions)
-        
-        await interaction.response.send_message(
-            f"💸 **AWS BILLING ALERT** 💸\n"
-            f"User: {interaction.user.mention}\n"
-            f"Amount Due: **${amount:,.2f}**\n"
-            f"Reason: You forgot to terminate a **{service}** in **{region}**.\n"
-            f"Action: Immediate liquidation of assets required."
-        )
+    # aws_bill removed
+
 
     @app_commands.command(name="cisco", description="Get a random Cisco fact or config line")
     async def cisco(self, interaction: discord.Interaction):

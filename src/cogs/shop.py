@@ -151,11 +151,22 @@ class Shop(commands.Cog):
         eco = self.get_economy()
         if not eco: return
         
-        balance = eco.get_balance(interaction.user.id)
-        user_gens = eco.get_generators(interaction.user.id)
-        user_data = eco.get_user_data(interaction.user.id)
-        inv = user_data.get("inventory", [])
+        # User details
+        user_id = interaction.user.id
+        balance = eco.get_balance(user_id)
         
+        # Build Embed
+        embed = self.build_shop_embed(interaction.user, balance, eco)
+        
+        # Build View
+        view = ShopView(self.bot, self, interaction.user.id)
+        await interaction.response.send_message(embed=embed, view=view)
+
+    def build_shop_embed(self, user, balance, eco):
+        user_gens = eco.get_generators(user.id)
+        user_data = eco.get_user_data(user.id)
+        inv = user_data.get("inventory", [])
+
         embed = discord.Embed(title="🛒 Defooz Tech Market", description=f"Your Balance: **{balance:.1f} Coins**", color=discord.Color.blue())
         
         # Items / Upgrades Section
@@ -165,7 +176,6 @@ class Shop(commands.Cog):
             is_locked = False
             req_text = ""
             if item.get("req_id"):
-                # Count how many of req_id user has in inventory
                 count_req = inv.count(item["req_id"])
                 if count_req < item["req_count"]:
                     is_locked = True
@@ -176,7 +186,7 @@ class Shop(commands.Cog):
                 embed.add_field(name=f"{item['name']} - LOCKED", value=req_text, inline=True)
             else:
                 owned_count = inv.count(item_id)
-                current_cost = self.get_dynamic_cost(interaction.user.id, item_id)
+                current_cost = self.get_dynamic_cost(user.id, item_id)
                 owned_text = f"\nOwned: **{owned_count}**" if item["type"] == "upgrade" else ""
                 embed.add_field(name=f"{item['name']} - {current_cost}💰", value=f"{item['desc']}{owned_text}", inline=True)
             
@@ -184,7 +194,6 @@ class Shop(commands.Cog):
         embed.add_field(name="🏭 Passive Income (Tech Tree)", value="Buy tech to generate coins/hour.", inline=False)
         
         for gen_id, gen in self.generators.items():
-            # Check requirements logic
             is_locked = False
             req_text = ""
             if gen["req_id"]:
@@ -195,39 +204,32 @@ class Shop(commands.Cog):
                     req_text = f"🔒 [Requires {gen['req_count']}x {req_name}]"
             
             owned = user_gens.get(gen_id, 0)
-            
             if is_locked:
                 embed.add_field(name=f"{gen['name']} - LOCKED", value=req_text, inline=True)
             else:
-                current_cost = self.get_dynamic_cost(interaction.user.id, gen_id)
+                current_cost = self.get_dynamic_cost(user.id, gen_id)
                 embed.add_field(
                     name=f"{gen['name']} - {current_cost}💰", 
                     value=f"Income: **{gen['rate']}/hr**\nOwned: **{owned}**\n{gen['desc']}", 
                     inline=True
                 )
-            
-        embed.set_footer(text="Use /buy <item_id> to purchase. Use /collect to harvest income.")
-        await interaction.response.send_message(embed=embed)
-
-    async def item_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        all_items = {**self.items, **self.generators}
-        choices = []
-        for key, value in all_items.items():
-            # Show base cost in autocomplete just for reference, or generic
-            display_name = f"{value['name']}"
-            if current.lower() in display_name.lower():
-                choices.append(app_commands.Choice(name=display_name, value=key))
         
-        return choices[:25]
+        embed.set_footer(text="Select an item below to purchase instantly! (Messaging is minimized)")
+        return embed
 
-    @app_commands.command(name="buy", description="Buy an item or generator")
-    @app_commands.autocomplete(item_id=item_autocomplete)
-    async def buy(self, interaction: discord.Interaction, item_id: str):
+    async def process_purchase(self, interaction: discord.Interaction, item_id: str, is_legacy: bool = False):
         eco = self.get_economy()
         item = self.items.get(item_id) or self.generators.get(item_id)
         
+        # Helper to send response safely (followup if deferred, response if not)
+        async def send_msg(content, ephemeral=True):
+            if interaction.response.is_done():
+                await interaction.followup.send(content, ephemeral=ephemeral)
+            else:
+                await interaction.response.send_message(content, ephemeral=ephemeral)
+        
         if not item:
-            return await interaction.response.send_message(f"❌ Unknown item.", ephemeral=True)
+            return await send_msg(f"❌ Unknown item.")
             
         # Check Generator Requirements
         if item_id in self.generators:
@@ -237,19 +239,18 @@ class Shop(commands.Cog):
                  prev_count = user_gens.get(gen["req_id"], 0)
                  if prev_count < gen["req_count"]:
                      req_name = self.generators[gen["req_id"]]["name"]
-                     return await interaction.response.send_message(f"🔒 **Locked**: You need **{gen['req_count']}x {req_name}** first.", ephemeral=True)
+                     return await send_msg(f"🔒 **Locked**: You need **{gen['req_count']}x {req_name}** first.")
 
         # Check Item/Upgrade Requirements
         if item_id in self.items:
             it = item
             if it.get("req_id"):
-                 # Check inventory count
                  user_data = eco.get_user_data(interaction.user.id)
                  inv = user_data.get("inventory", [])
                  prev_count = inv.count(it["req_id"])
                  if prev_count < it["req_count"]:
                      req_name = self.items[it["req_id"]]["name"]
-                     return await interaction.response.send_message(f"🔒 **Locked**: You need **{it['req_count']}x {req_name}** first.", ephemeral=True)
+                     return await send_msg(f"🔒 **Locked**: You need **{it['req_count']}x {req_name}** first.")
 
         # Calculate Dynamic Cost
         total_cost = self.get_dynamic_cost(interaction.user.id, item_id)
@@ -279,19 +280,19 @@ class Shop(commands.Cog):
                 eco.remove_item(interaction.user.id, "coffee")
                 msg += f"\n☕ Defooz appreciates it."
             
-            await interaction.response.send_message(msg)
+            # Button Purchase (New System): Send ephemeral confirmation
+            if not is_legacy:
+                await send_msg(msg, ephemeral=True)
+                return True 
         else:
-             await interaction.response.send_message(f"❌ **Insufficient Funds**.", ephemeral=True)
+             await send_msg(f"❌ **Insufficient Funds** for {item['name']}.", ephemeral=True)
+             return False
 
-    def calculate_user_stats(self, user_id):
+
+    def calculate_stats_from_data(self, inv):
+        """Helper to calculate click stats efficiently from inventory list"""
         base_gain = 1.0 
         crit_chance = 0.05
-        
-        eco = self.get_economy()
-        if not eco: return base_gain, crit_chance
-
-        user_data = eco.get_user_data(user_id)
-        inv = user_data.get("inventory", [])
         
         from collections import Counter
         counts = Counter(inv)
@@ -305,6 +306,14 @@ class Shop(commands.Cog):
                     crit_chance += item["bonus"] * count
         
         return base_gain, crit_chance
+
+    def calculate_user_stats(self, user_id):
+        eco = self.get_economy()
+        if not eco: return 1.0, 0.05
+        
+        user_data = eco.get_user_data(user_id)
+        inv = user_data.get("inventory", [])
+        return self.calculate_stats_from_data(inv)
 
     @app_commands.command(name="click", description="Open YOUR Mining Console (Restricted to you)")
     async def click_console(self, interaction: discord.Interaction):
@@ -366,12 +375,140 @@ class Shop(commands.Cog):
         desc += f"\n⚡ **Total Profit**: {total_rate} Coins/Hour"
         await interaction.response.send_message(embed=discord.Embed(title=f"🎒 Inventory - {interaction.user.display_name}", description=desc))
 
-    @app_commands.command(name="leaderboard", description="Top 10 Richest")
+    @app_commands.command(name="leaderboard", description="Top Miners (Sorted by Passive Income)")
     async def leaderboard(self, interaction: discord.Interaction):
          eco = self.get_economy()
-         data = eco.get_leaderboard()
-         desc = "\n".join([f"**{i}.** <@{u}> : **{b:.1f}**" for i, (u, b) in enumerate(data, 1)])
-         await interaction.response.send_message(embed=discord.Embed(title="🏆 Leaderboard", description=desc))
+         if not eco: return
+         
+         # fetch all data
+         all_users = eco.get_all_users_data()
+         
+         # Calculate stats for each user
+         leaderboard_data = []
+         rates = self.get_gen_rates()
+         
+         for user_id_str, data in all_users:
+             # Balance
+             balance = data.get("balance", 0)
+             
+             # Passive Rate (Profit/hr)
+             user_gens = data.get("generators", {})
+             passive_rate = 0
+             for gid, count in user_gens.items():
+                 if gid in rates:
+                     passive_rate += rates[gid] * count
+                     
+             # Click Stats
+             inv = data.get("inventory", [])
+             click_gain, click_crit = self.calculate_stats_from_data(inv)
+             
+             leaderboard_data.append({
+                 "id": user_id_str,
+                 "balance": balance,
+                 "passive": passive_rate,
+                 "click_gain": click_gain,
+                 "click_crit": click_crit
+             })
+             
+         # Sort by Passive Rate (Desc)
+         leaderboard_data.sort(key=lambda x: x["passive"], reverse=True)
+         
+         # Format Output
+         desc = ""
+         for i, p in enumerate(leaderboard_data[:15], 1): # Top 15
+             try:
+                 # Check strict sorting by passive
+                 user_mention = f"<@{p['id']}>"
+                 line = f"**{i}.** {user_mention} • ⚡ **{p['passive']}/hr** • 💰 **{p['balance']:.1f}** • 🖱️ **{p['click_gain']:.1f}**\n"
+                 desc += line
+             except:
+                 continue
+
+         if not desc:
+             desc = "No miners found yet."
+             
+         embed = discord.Embed(title="🏆 Elite Miners Leaderboard", description=desc, color=discord.Color.gold())
+         embed.set_footer(text="Sorted by Passive Income (Generators)")
+         await interaction.response.send_message(embed=embed)
+
+class ShopDropdown(discord.ui.Select):
+    def __init__(self, shop_cog, user_id):
+        self.shop = shop_cog
+        self.user_id = user_id
+        
+        # Build Options
+        options = []
+        all_items = {**self.shop.items, **self.shop.generators}
+        
+        for k, v in all_items.items():
+            cost = self.shop.get_dynamic_cost(user_id, k)
+            label = f"{v['name']} ({cost}💰)"
+            if len(label) > 100: label = label[:97] + "..."
+            options.append(discord.SelectOption(label=label, value=k, description=f"Buy {v['name']}"))
+            
+        super().__init__(placeholder="🛒 Select an item...", min_values=1, max_values=1, options=options[:25])
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Open your own shop!", ephemeral=True)
+        
+        # Defer update
+        await interaction.response.defer()
+        
+        item_id = self.values[0]
+        # Set state on View
+        self.view.selected_item_id = item_id
+        
+        # Update Button
+        buy_btn = [x for x in self.view.children if isinstance(x, discord.ui.Button) and x.custom_id == "buy_btn"][0]
+        buy_btn.disabled = False
+        
+        item = self.shop.items.get(item_id) or self.shop.generators.get(item_id)
+        if item:
+            cost = self.shop.get_dynamic_cost(self.user_id, item_id)
+            buy_btn.label = f"Buy {item['name']} ({cost}💰)"
+            buy_btn.style = discord.ButtonStyle.success
+        
+        # Update Message
+        await interaction.edit_original_response(view=self.view)
+
+class ShopView(discord.ui.View):
+    def __init__(self, bot, shop_cog, user_id):
+        super().__init__(timeout=180)
+        self.bot = bot
+        self.shop = shop_cog
+        self.user_id = user_id
+        self.selected_item_id = None
+        
+        self.add_item(ShopDropdown(shop_cog, user_id))
+        
+    @discord.ui.button(label="Select an item above...", style=discord.ButtonStyle.secondary, disabled=True, custom_id="buy_btn", row=1)
+    async def buy_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Open your own shop!", ephemeral=True)
+        
+        if not self.selected_item_id:
+            return await interaction.response.send_message("❌ Select an item first!", ephemeral=True)
+            
+        # Execute Purchase
+        success = await self.shop.process_purchase(interaction, self.selected_item_id, is_legacy=False)
+        
+        if success:
+            # Update Embed and View (Recalculate costs)
+            eco = self.shop.get_economy()
+            bal = eco.get_balance(self.user_id)
+            embed = self.shop.build_shop_embed(interaction.user, bal, eco)
+            
+            # Re-create view to refresh prices in dropdown
+            new_view = ShopView(self.bot, self.shop, self.user_id)
+            
+            # Update the SHOP MESSAGE (Not the ephemeral response)
+            try:
+                if interaction.message:
+                    await interaction.message.edit(embed=embed, view=new_view)
+            except:
+                pass
+
 
 class MiningView(discord.ui.View):
     def __init__(self, eco, user_id, items_dict, shop_cog):

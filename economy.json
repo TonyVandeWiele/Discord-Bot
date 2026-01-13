@@ -1,18 +1,19 @@
 {
     "526366336507707402": {
-        "balance": 994.9999999999999,
+        "balance": 769.0,
         "last_daily": "2026-01-12",
         "inventory": [
+            "logi_b100",
             "logi_b100"
         ],
         "generators": {
-            "cisco_lab": 5
+            "cisco_lab": 9
         },
         "last_collection": "2026-01-12T20:57:51.034496"
     },
     "270220773682053133": {
-        "balance": 45.30000000000009,
-        "last_daily": "2026-01-12",
+        "balance": 39.69999999999959,
+        "last_daily": "2026-01-13",
         "inventory": [
             "logi_b100",
             "logi_b100",
@@ -31,7 +32,8 @@
         ],
         "generators": {
             "cisco_lab": 5
-        }
+        },
+        "last_collection": "2026-01-13T19:17:49.928184"
     },
     "234666130004901888": {
         "balance": 247.4,
@@ -39,8 +41,8 @@
         "inventory": []
     },
     "457928282822672384": {
-        "balance": 7243.899999999994,
-        "last_daily": "2026-01-12",
+        "balance": 6984.100000002596,
+        "last_daily": "2026-01-13",
         "inventory": [
             "logi_b100",
             "logi_b100",
@@ -83,17 +85,17 @@
             "wooting_60he"
         ],
         "generators": {
-            "cisco_lab": 5,
-            "aws_lambda": 5,
-            "nexus_9k": 5,
-            "ecs_cluster": 5,
-            "sagemaker": 5,
+            "cisco_lab": 10,
+            "aws_lambda": 10,
+            "nexus_9k": 10,
+            "ecs_cluster": 10,
+            "sagemaker": 8,
             "braket": 1
         },
-        "last_collection": "2026-01-12T20:58:03.820631"
+        "last_collection": "2026-01-13T19:12:33.109499"
     },
     "201632429524385792": {
-        "balance": 30.4,
+        "balance": 325.4,
         "last_daily": "2026-01-12",
         "inventory": [
             "logi_b100",
@@ -105,9 +107,9 @@
         "generators": {
             "cisco_lab": 5
         },
-        "last_collection": "2026-01-12T19:30:49.958774"
+        "last_collection": "2026-01-13T07:20:59.748318"
     },
-    "_GLOBAL_JACKPOT": 6485,
+    "_GLOBAL_JACKPOT": 37619,
     "762661687043948565": {
         "balance": 0.4,
         "last_daily": "2026-01-12",

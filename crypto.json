@@ -1,7 +1,35 @@
 {
     "526366336507707402": {
         "btc": 0.0,
-        "components": [],
+        "components": [
+            "rack_small",
+            "rack_small"
+        ],
         "last_mined": "2026-01-12T22:21:36.601069"
+    },
+    "457928282822672384": {
+        "btc": 0.019904199999999872,
+        "components": [
+            "rack_medium",
+            "gpu_3060",
+            "cpu_threadripper",
+            "cpu_threadripper",
+            "cpu_threadripper",
+            "rack_medium",
+            "cpu_threadripper",
+            "cpu_threadripper",
+            "gpu_4090",
+            "cpu_threadripper",
+            "cpu_threadripper",
+            "cpu_threadripper",
+            "cpu_threadripper",
+            "cpu_threadripper",
+            "cpu_threadripper",
+            "cpu_threadripper",
+            "cpu_threadripper",
+            "cpu_threadripper",
+            "cpu_threadripper"
+        ],
+        "last_mined": "2026-01-13T10:11:46.071887"
     }
 }
