@@ -1,15 +1,13 @@
 --- Diagnostic Report ---
-Total Commands: 33
+Total Commands: 31
  - ask_marvin
  - balance
- - buy
  - calc
  - casino_info
  - cheat
  - cisco
  - click
  - collect
- - crypto_buy
  - crypto_price
  - crypto_sell
  - crypto_shop

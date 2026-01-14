@@ -25,6 +25,8 @@ class EconomySystem(commands.Cog):
         with open(DATA_FILE, "w") as f:
             json.dump(self.data, f, indent=4)
 
+
+
     # Migrating to schema: {"user_id": {"balance": int, "last_daily": str_date}}
     
     def get_user_data(self, user_id: int):
@@ -278,56 +280,19 @@ class EconomySystem(commands.Cog):
 
     @app_commands.command(name="rain", description="Make it Rain! (Interactive 60s Pool)")
     async def rain(self, interaction: discord.Interaction, amount: int):
-         if amount <= 0: return await interaction.response.send_message("❌ Invalid amount.", ephemeral=True)
-         
-         if not self.remove_money(interaction.user.id, amount):
-             return await interaction.response.send_message("❌ You are too poor to make it rain.", ephemeral=True)
+         try:
+             if amount <= 0: return await interaction.response.send_message("❌ Invalid amount.", ephemeral=True)
+             
+             if not self.remove_money(interaction.user.id, amount):
+                 return await interaction.response.send_message("❌ You are too poor to make it rain.", ephemeral=True)
 
-         # Create View
-         view = RainView(self.bot, amount, interaction.user.id)
-         await interaction.response.send_message(f"🌧️ **MAKE IT RAIN!** 🌧️\n**{interaction.user.display_name}** is dropping **{amount} Coins**!\n\n👇 **Click the button to join the pool!**\n⏳ *Ends in 60 seconds...*", view=view)
-         view.message = await interaction.original_response()
-
-    class RainView(discord.ui.View):
-        def __init__(self, bot, amount, owner_id):
-            super().__init__(timeout=60)
-            self.bot = bot
-            self.amount = amount
-            self.owner_id = owner_id
-            self.participants = set()
-            self.message = None
-
-        @discord.ui.button(label="💸 Grab Coins", style=discord.ButtonStyle.success)
-        async def grab(self, interaction: discord.Interaction, button: discord.ui.Button):
-            if interaction.user.id == self.owner_id:
-                 return await interaction.response.send_message("❌ You dropped it, you can't pick it up!", ephemeral=True)
-            
-            if interaction.user.id in self.participants:
-                return await interaction.response.send_message("❌ You are already in the pool!", ephemeral=True)
-            
-            self.participants.add(interaction.user.id)
-            await interaction.response.send_message("✅ You joined the rain pool!", ephemeral=True)
-            
-            # Update button label
-            button.label = f"💸 Grab Coins ({len(self.participants)})"
-            await self.message.edit(view=self)
-
-        async def on_timeout(self):
-            if not self.participants:
-                # Refund owner
-                eco = self.bot.get_cog("EconomySystem")
-                if eco: eco.add_money(self.owner_id, self.amount)
-                if self.message: await self.message.edit(content=f"❌ **RAIN OVER**: No one picked up the **{self.amount} Coins**. Refunded to {self.owner_id}.", view=None)
-                return
-
-            share = self.amount / len(self.participants)
-            eco = self.bot.get_cog("EconomySystem")
-            if eco:
-                for uid in self.participants:
-                    eco.add_money(uid, share) # Tax individual shares? Maybe. For now, no double tax.
-            
-            if self.message:
-                await self.message.edit(content=f"🌧️ **RAIN OVER!**\n**{self.amount} Coins** shared among **{len(self.participants)}** people.\nEveryone got **{share:.1f} Coins**!", view=None)
+             # Create View
+             view = RainView(self.bot, amount, interaction.user.id)
+             await interaction.response.send_message(f"🌧️ **MAKE IT RAIN!** 🌧️\n**{interaction.user.display_name}** is dropping **{amount} Coins**!\n\n👇 **Click the button to join the pool!**\n⏳ *Ends in 60 seconds...*", view=view)
+             view.message = await interaction.original_response()
+         except Exception as e:
+             await interaction.response.send_message(f"❌ Error executing rain: {e}", ephemeral=True)
+             print(f"Error in rain command: {e}")
 
     @app_commands.command(name="loan", description="Offer a loan to a user")
     async def loan(self, interaction: discord.Interaction, user: discord.Member, amount: int, interest: int):
@@ -378,6 +343,47 @@ class EconomySystem(commands.Cog):
 
     # Commands 'pay' and 'eco_give' removed by request
 
+
+class RainView(discord.ui.View):
+    def __init__(self, bot, amount, owner_id):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.amount = amount
+        self.owner_id = owner_id
+        self.participants = set()
+        self.message = None
+
+    @discord.ui.button(label="💸 Grab Coins", style=discord.ButtonStyle.success)
+    async def grab(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id == self.owner_id:
+                return await interaction.response.send_message("❌ You dropped it, you can't pick it up!", ephemeral=True)
+        
+        if interaction.user.id in self.participants:
+            return await interaction.response.send_message("❌ You are already in the pool!", ephemeral=True)
+        
+        self.participants.add(interaction.user.id)
+        await interaction.response.send_message("✅ You joined the rain pool!", ephemeral=True)
+        
+        # Update button label
+        button.label = f"💸 Grab Coins ({len(self.participants)})"
+        await self.message.edit(view=self)
+
+    async def on_timeout(self):
+        if not self.participants:
+            # Refund owner
+            eco = self.bot.get_cog("EconomySystem")
+            if eco: eco.add_money(self.owner_id, self.amount)
+            if self.message: await self.message.edit(content=f"❌ **RAIN OVER**: No one picked up the **{self.amount} Coins**. Refunded to {self.owner_id}.", view=None)
+            return
+
+        share = self.amount / len(self.participants)
+        eco = self.bot.get_cog("EconomySystem")
+        if eco:
+            for uid in self.participants:
+                eco.add_money(uid, share) # Tax individual shares? Maybe. For now, no double tax.
+        
+        if self.message:
+            await self.message.edit(content=f"🌧️ **RAIN OVER!**\n**{self.amount} Coins** shared among **{len(self.participants)}** people.\nEveryone got **{share:.1f} Coins**!", view=None)
 
 async def setup(bot):
     await bot.add_cog(EconomySystem(bot))

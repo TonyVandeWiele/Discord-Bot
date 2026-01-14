@@ -1,6 +1,6 @@
 {
     "526366336507707402": {
-        "balance": 769.0,
+        "balance": 1049.0,
         "last_daily": "2026-01-12",
         "inventory": [
             "logi_b100",
@@ -12,7 +12,7 @@
         "last_collection": "2026-01-12T20:57:51.034496"
     },
     "270220773682053133": {
-        "balance": 39.69999999999959,
+        "balance": 439.6999999999996,
         "last_daily": "2026-01-13",
         "inventory": [
             "logi_b100",
@@ -36,13 +36,13 @@
         "last_collection": "2026-01-13T19:17:49.928184"
     },
     "234666130004901888": {
-        "balance": 247.4,
+        "balance": 647.4,
         "last_daily": "2026-01-12",
         "inventory": []
     },
     "457928282822672384": {
-        "balance": 6984.100000002596,
-        "last_daily": "2026-01-13",
+        "balance": 50094.30000000477,
+        "last_daily": "2026-01-14",
         "inventory": [
             "logi_b100",
             "logi_b100",
@@ -82,6 +82,20 @@
             "secretlab_titan",
             "wooting_60he",
             "wooting_60he",
+            "wooting_60he",
+            "hyperx_pulsefire",
+            "hyperx_pulsefire",
+            "hyperx_pulsefire",
+            "hyperx_pulsefire",
+            "hyperx_pulsefire",
+            "razer_deathadder",
+            "razer_deathadder",
+            "razer_deathadder",
+            "razer_deathadder",
+            "razer_deathadder",
+            "razer_deathadder",
+            "logi_g502",
+            "wooting_60he",
             "wooting_60he"
         ],
         "generators": {
@@ -89,13 +103,13 @@
             "aws_lambda": 10,
             "nexus_9k": 10,
             "ecs_cluster": 10,
-            "sagemaker": 8,
+            "sagemaker": 10,
             "braket": 1
         },
-        "last_collection": "2026-01-13T19:12:33.109499"
+        "last_collection": "2026-01-14T15:01:35.181416"
     },
     "201632429524385792": {
-        "balance": 325.4,
+        "balance": 5225.4,
         "last_daily": "2026-01-12",
         "inventory": [
             "logi_b100",
@@ -109,10 +123,22 @@
         },
         "last_collection": "2026-01-13T07:20:59.748318"
     },
-    "_GLOBAL_JACKPOT": 37619,
+    "_GLOBAL_JACKPOT": 76533,
     "762661687043948565": {
-        "balance": 0.4,
+        "balance": 400.4,
         "last_daily": "2026-01-12",
         "inventory": []
-    }
+    },
+    "_LOANS": [
+        {
+            "id": "b08948d3",
+            "lender": 457928282822672384,
+            "borrower": 201632429524385792,
+            "amount": 5000,
+            "interest": 0,
+            "repayment": 5000.0,
+            "date": "2026-01-14",
+            "status": "pending"
+        }
+    ]
 }

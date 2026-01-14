@@ -34,33 +34,30 @@ class FunGames(commands.Cog):
         
     @app_commands.command(name="casino_info", description="View Casino Statistics & RTP")
     async def casino_info(self, interaction: discord.Interaction):
-        # Precise Math based on standard weights
-        # Total Weight: 72 (13*4 + 10 + 5*2)
-        
+        eco = self.get_economy()
+        current_jackpot = eco.get_jackpot() if eco else "N/A"
+
         embed = discord.Embed(title="🎰 Defooz Casino Stats", color=discord.Color.green())
-        embed.description = "The casino operates on a weighted RNG system.\n**Total Weight Pool**: 72"
+        embed.description = f"The casino operates on a weighted RNG system.\n**Total Weight Pool**: 72\n\n💰 **Current Global Jackpot**: `{current_jackpot}` Coins"
         
         # Table Header
-        header = "| Type | Combo | Chance | Payout |"
-        sep = "| :--- | :--- | :--- | :--- |"
+        # Using a code block for alignment
+        table_content = (
+            "| Type      | Combo       | Chance          | Payout     |\n"
+            "|-----------|-------------|-----------------|------------|\n"
+            "| JACKPOT   | 7-7-7       | 0.03% (1/2,986) | Global Pot |\n"
+            "| Diamond   | 💎-💎-💎    | 0.03% (1/2,986) | 55x        |\n"
+            "| Triple    | 🍒/🍊/...   | 2.35% (1/42)    | 16x        |\n"
+            "| Pair      | Any Pair*   | 28.9% (1/3.5)   | 2x         |\n"
+            "| FAILURE   | 💩-💩-💩    | 0.27% (1/373)   | 0x (Lost)  |"
+        )
         
-        # Data
-        # Jackpot (777) - 5/72 ^ 3
-        row1 = "| **JACKPOT** | 7️⃣-7️⃣-7️⃣ | **0.03%** (1/2,986) | **Global Pot** |"
-        # Diamond (555) - 5/72 ^ 3
-        row2 = "| **Diamond** | 💎-💎-💎 | **0.03%** (1/2,986) | **55x** |"
-        # Triple Fruit - 4 * (13/72 ^ 3)
-        row3 = "| **Triple** | 🍒/🍊/🍋/🍇 | **2.35%** (1/42) | **16x** |"
-        # Triple Poop - 10/72 ^ 3
-        row4 = "| **FAILURE** | 💩-💩-💩 | **0.27%** (1/373) | **0x** (Lost) |"
-        # Pair - Approx 25-30%
-        row5 = "| **Pair** | Any Pair | **~28%** (1/3.5) | **2x** |"
+        embed.add_field(name="📊 Probability Table", value=f"```\n{table_content}\n```", inline=False)
         
-        table = f"\n{header}\n{sep}\n{row1}\n{row2}\n{row3}\n{row4}\n{row5}\n"
-        
-        embed.add_field(name="📊 Probability Table", value=table, inline=False)
-        
-        embed.add_field(name="RTP (Return to Player)", value="**~97.0%**\n*The house always wins (eventually).*")
+        embed.add_field(
+            name="ℹ️ Rules & RTP", 
+            value="• **Pair Rule**: Pairs lose if **Poop** (💩) is present.\n• **RTP (Return to Player)**: **~97.34%**\n*The house always wins (eventually).*"
+        )
         embed.set_footer(text="Gamble responsibly.")
         
         await interaction.response.send_message(embed=embed)
